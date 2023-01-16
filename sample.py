@@ -12,7 +12,7 @@ BUCKET = os.environ["BUCKETNAME"]
 
 def lambda_handler(event, context):
     print(event)
-    if event["headers"] and not check_origin(event["headers"]["origin"]):
+    if event.get('headers', {}).get('origin') and not check_origin(event["headers"]["origin"]):
         return {
             "statusCode": 403,
             "headers": {
