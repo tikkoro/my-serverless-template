@@ -1,0 +1,56 @@
+service: serverless-template
+useDotenv: true
+provider:
+    name: aws
+    region: ap-northeast-1
+    endpointType: REGIONAL
+
+plugins:
+    # each function uses individual role
+    - serverless-iam-roles-per-function
+    # use python libraly
+    # - serverless-python-requirements
+
+# not update all files
+package:
+    individually: true
+    exclude:
+        - "**"
+
+functions:
+    sample:
+        runtime: python3.9
+        timeout: 30
+        handler: sample.lambda_handler
+        package:
+            individually: true
+            include:
+                - "sample.py"
+                - "functions/check_origin.py"
+        iamRoleStatementsName: template-s3-access-${param:stage}-ap-northeast-1-lambdaRole
+        # include provider's role
+        iamRoleStatementsInherit: true
+        # additional role
+        iamRoleStatements:
+            - Effect: "Allow"
+              Action:
+                  - "s3:*"
+                  - "s3-object-lambda:*"
+              Resource:
+                  - "*"
+        environment:
+            WHITELIST: ${env:WHITELIST}
+            BUCKETNAME: ${env:BUCKET_NAME}
+        # api gateway's path
+        events:
+            - http:
+                  path: /sample
+                  method: get
+                  integration: lambda-proxy
+                  cors: true
+
+params:
+    dev:
+        stage: dev
+    prod:
+        stage: prod
